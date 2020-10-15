@@ -1,3 +1,18 @@
+/*
+ *  Thalassophobia
+ *  by Gabriel Jones 2020
+ *  Lead development by Gabriel Jones
+ *  Additional development by Daniel King
+ *
+ *  --------------------
+ *  Blinks by Move38
+ *  Brought to life via Kickstarter 2018
+ *
+ *  @madewithblinks
+ *  www.move38.com
+ *  --------------------
+ */
+
 #define PATH_COLOR BLUE
 #define AVATAR_COLOR GREEN
 #define WALL_COLOR RED
