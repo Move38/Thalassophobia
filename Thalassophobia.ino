@@ -1,17 +1,17 @@
 /*
- *  Thalassophobia
- *  by Gabriel Jones 2020
- *  Lead development by Gabriel Jones
- *  Additional development by Daniel King
- *
- *  --------------------
- *  Blinks by Move38
- *  Brought to life via Kickstarter 2018
- *
- *  @madewithblinks
- *  www.move38.com
- *  --------------------
- */
+    Thalassophobia
+    by Gabriel Jones 2020
+    Lead development by Gabriel Jones
+    Additional development by Daniel King
+
+    --------------------
+    Blinks by Move38
+    Brought to life via Kickstarter 2018
+
+    @madewithblinks
+    www.move38.com
+    --------------------
+*/
 
 #define PATH_COLOR BLUE
 #define AVATAR_COLOR GREEN
@@ -250,7 +250,7 @@ void enterState_Path() {
 }
 
 void loopState_Path() {
-  if(isAlone()) {
+  if (isAlone()) {
     enterState_Fog();
     return;
   }
@@ -389,44 +389,44 @@ void enterState_BroadcastIgnore() {
 }
 
 void loopState_BroadcastIgnore() {
-  if(timer.isExpired()) { //stop ignoring
+  if (timer.isExpired()) { //stop ignoring
     state = postBroadcastState;
 
     switch (postBroadcastState) {
       case INIT:
         enterState_Init();
         break;
-//        case AVATAR:
-//          enterState_Avatar();
-//          break;
-//        case AVATAR_ENTERING:
-//          enterState_AvatarEntering();
-//          break;
-//        case AVATAR_LEAVING:
-//          enterState_AvatarLeaving();
-//          break;
-//        case AVATAR_ASCENDED:
-//          enterState_AvatarAscended();
-//          break;
+      //        case AVATAR:
+      //          enterState_Avatar();
+      //          break;
+      //        case AVATAR_ENTERING:
+      //          enterState_AvatarEntering();
+      //          break;
+      //        case AVATAR_LEAVING:
+      //          enterState_AvatarLeaving();
+      //          break;
+      //        case AVATAR_ASCENDED:
+      //          enterState_AvatarAscended();
+      //          break;
       case FOG:
         enterState_Fog();
         break;
-//        case PATH:
-//          enterState_Path();
-//          break;
-//        case WALL:
-//          enterState_Wall();
-//          break;
+      //        case PATH:
+      //          enterState_Path();
+      //          break;
+      //        case WALL:
+      //          enterState_Wall();
+      //          break;
       case GAME_OVER:
         enterState_GameOver();
         break;
-//        case BROADCAST:
-//          enterState_Broadcast();
-//          break;
-//        case BROADCAST_IGNORE:
-//          enterState_BroadcastIgnore();
-//          break;
-     }
+        //        case BROADCAST:
+        //          enterState_Broadcast();
+        //          break;
+        //        case BROADCAST_IGNORE:
+        //          enterState_BroadcastIgnore();
+        //          break;
+    }
   }
 }
 
@@ -561,8 +561,11 @@ byte sparkleOffset[6] = {0, 3, 5, 1, 4, 2};
 
 void stairDisplay(byte hue, byte sat, byte bri) {
   byte sparkleFrame = (millis() % SPARKLE_CYCLE_TIME) / SPARKLE_FLASH_TIME;
+  byte sparkleProgress = map(millis() % SPARKLE_FLASH_TIME, 0, SPARKLE_FLASH_TIME, 0, sat);
   if (sparkleFrame < 6) {
-    setColorOnFace(dim(WHITE, bri), sparkleOffset[sparkleFrame]);
+    setColorOnFace(makeColorHSB(hue, sparkleProgress, bri), sparkleOffset[sparkleFrame]);
+
+    //here we need to create the fading effect, which... huh
   }
 }
 
