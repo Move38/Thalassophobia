@@ -464,9 +464,13 @@ void loop() {
       loopState_GameOver();
       break;
     case BROADCAST:
+      fogDisplay();
+      stairDisplay(110, 200, 255);
       loopState_Broadcast();
       break;
     case BROADCAST_IGNORE:
+      fogDisplay();
+      stairDisplay(110, 200, 255);
       loopState_BroadcastIgnore();
       break;
   }
