@@ -538,7 +538,12 @@ void wallDisplay() {
   byte currentHue = map(REVERT_TIME_PATH - timer.getRemaining(), 0, REVERT_TIME_PATH, grassHue, waterHue);
   byte currentBri = map(timer.getRemaining(), 0, REVERT_TIME_PATH, 60, map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_BRI_DEEP, WATER_BRI_SHALLOW));
 
-  setColor(makeColorHSB(currentHue, 255, currentBri));
+  setColorOnFace(makeColorHSB(currentHue, 255, currentBri), 0);
+  setColorOnFace(makeColorHSB(currentHue, 255, currentBri / 2), 1);
+  setColorOnFace(makeColorHSB(currentHue, 255, currentBri), 2);
+  setColorOnFace(makeColorHSB(currentHue, 255, currentBri / 2), 3);
+  setColorOnFace(makeColorHSB(currentHue, 255, currentBri), 4);
+  setColorOnFace(makeColorHSB(currentHue, 255, currentBri / 2), 5);
 
   if (isStairs) {
     stairDisplay(currentHue, 255, currentBri);
