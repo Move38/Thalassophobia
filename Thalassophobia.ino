@@ -344,6 +344,8 @@ void enterState_Broadcast() {
       postBroadcastState = GAME_OVER;
       break;
     case RESET:
+      isStairs = false;
+      stairsTimer.set(STAIR_INTERVAL); //prevent stairs from popping next to avatar immediately on ascension
       postBroadcastState = INIT;
       break;
   }
@@ -422,6 +424,8 @@ void setup() {
 void loop() {
   switch (state) {
     case INIT:
+      fogDisplay();
+      stairDisplay(110, 200, 255);
       //should never be in this state
       break;
     case AVATAR:
@@ -525,9 +529,6 @@ void pathDisplay() {
 
   if (isStairs) {
     stairDisplay(currentHue, currentSat, currentBri);
-
-    //      setColorOnFace(makeColorHSB(currentHue, 0, currentBri), random(5));
-    //      setColorOnFace(makeColorHSB(currentHue, 0, currentBri), random(5));
   }
 
 }
