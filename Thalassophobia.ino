@@ -13,12 +13,6 @@
     --------------------
 */
 
-#define PATH_COLOR BLUE
-#define AVATAR_COLOR GREEN
-#define WALL_COLOR RED
-#define FOG_COLOR dim(WHITE, 32)
-#define RESET_COLOR MAGENTA
-#define STAIRS_COLOR YELLOW
 #define REVERT_TIME_PATH 2000
 #define REVERT_TIME_WALL  2000
 #define STAIR_INTERVAL    8000
@@ -106,13 +100,6 @@ void moveStairs() {
   }
 }
 
-Color dimToLevel(Color color) {
-  return color;
-  byte level_inv = AVATAR_6 - level;
-  byte bright = map(level_inv, 0, AVATAR_5 & LEVEL_MASK, 32, MAX_BRIGHTNESS);
-  return dim(color, bright);
-}
-
 void enterState_Avatar() {
   setValueSentOnAllFaces(level);
   setColor(OFF);
@@ -142,7 +129,7 @@ void loopState_Avatar() {
 void enterState_AvatarLeaving() {
   setValueSentOnAllFaces(NONE);
   setValueSentOnFace(DEPARTED, heading);
-  setColor(dimToLevel(PATH_COLOR));
+
   setColorHalfHeading(dim(WHITE, 100));
   state = AVATAR_LEAVING;
 }
@@ -151,7 +138,7 @@ void loopState_AvatarLeaving() {
   if (!isValueReceivedOnFaceExpired(heading)) {
     // if neighbor is sending avatar then the avatar has successfully moved
     if ((getLastValueReceivedOnFace(heading) & AVATAR_0) == AVATAR_0) {
-      setColor(dimToLevel(PATH_COLOR));
+
       enterState_Path(); return;
     }
   }
@@ -162,7 +149,6 @@ void loopState_AvatarLeaving() {
 
 void enterState_AvatarEntering() {
   setValueSentOnFace(MOVE, heading); //request the avatar move here
-  setColor(dimToLevel(PATH_COLOR));
   setColorHalfHeading(dim(WHITE, 100));
   state = AVATAR_ENTERING;
 }
@@ -195,8 +181,7 @@ void enterState_AvatarAscended() {
   } else {
     broadcastMessage = ASCEND;
   }
-  setColor(OFF);
-  setColorOnFace(AVATAR_COLOR, 0);
+
   setValueSentOnAllFaces(broadcastMessage);
   state = AVATAR_ASCENDED;
 }
@@ -212,8 +197,6 @@ void loopState_AvatarAscended() {
 void enterState_Fog() {
 
   setValueSentOnAllFaces(NONE);
-  fogDisplay();
-
   state = FOG;
 }
 
@@ -276,7 +259,6 @@ void loopState_Path() {
     moveStairs();
   }
 
-  pathDisplay();
 
   if (handleGameTimer()) return;
   handleBroadcasts(true, false);
@@ -325,14 +307,11 @@ void loopState_Wall() {
 void enterState_GameOver() {
   setValueSentOnAllFaces(NONE);
   if (won) { //TODO better win celebration animation
-    FOREACH_FACE(f) {
-      setColorOnFace(dim(STAIRS_COLOR, f * (255 / 6)), f);
-    }
+    // victory animation
+
   } else {
-    setColor(WALL_COLOR);
-    FOREACH_FACE(f) {
-      if (f % 2 == 0) setColorOnFace(OFF, f);
-    }
+    //death animation
+
   }
   state = GAME_OVER;
 }
@@ -343,9 +322,9 @@ void loopState_GameOver() {
 
   byte offset = (millis() % 1200 / 200);
   if (won) {
-    FOREACH_FACE(f) {
-      setColorOnFace(dim(STAIRS_COLOR, (f - offset) % 6 * (255 / 6)), f);
-    }
+
+  } else {
+
   }
 
   handleBroadcasts(true, true);
@@ -356,18 +335,15 @@ void enterState_Broadcast() {
   setValueSentOnAllFaces(broadcastMessage);
   switch (broadcastMessage) {
     case ASCEND:
-      fogDisplay();
       isStairs = false;
       stairsTimer.set(STAIR_INTERVAL); //prevent stairs from popping next to avatar immediately on ascension
       postBroadcastState = FOG;
       break;
     case WIN:
       won = true;
-      setColor(WHITE);
       postBroadcastState = GAME_OVER;
       break;
     case RESET:
-      fogDisplay();
       postBroadcastState = INIT;
       break;
   }
@@ -384,7 +360,6 @@ void loopState_Broadcast() {
 void enterState_BroadcastIgnore() {
   timer.set(500);
   setValueSentOnAllFaces(NONE); //stop broadcasting
-  fogDisplay();
   state = BROADCAST_IGNORE;
 }
 
@@ -437,8 +412,6 @@ void enterState_Init() {
   won = false;
   level = AVATAR_6;
   broadcastMessage = NONE;
-  //setColor(dimToLevel(GREEN));
-  fogDisplay();
   enterState_Fog(); return; //shortcircuit straight to FOG
 }
 
@@ -453,26 +426,41 @@ void loop() {
       break;
     case AVATAR:
       loopState_Avatar();
+      avatarDisplay();
       break;
     case AVATAR_ENTERING:
+      pathDisplay();
       loopState_AvatarEntering();
       break;
     case AVATAR_LEAVING:
+      pathDisplay();
       loopState_AvatarLeaving();
       break;
     case AVATAR_ASCENDED:
+      pathDisplay();
+      stairDisplay(110, 200, 255);
       loopState_AvatarAscended();
       break;
     case FOG:
+      fogDisplay();
       loopState_Fog();
       break;
     case PATH:
+      pathDisplay();
       loopState_Path();
       break;
     case WALL:
+      wallDisplay();
       loopState_Wall();
       break;
     case GAME_OVER:
+      if (won) {
+        setColor(CYAN);
+        stairDisplay(110, 200, 255);
+      } else {
+        setColor(RED);
+        stairDisplay(0, 255, 255);
+      }
       loopState_GameOver();
       break;
     case BROADCAST:
