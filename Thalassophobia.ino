@@ -94,9 +94,11 @@ bool handleGameTimer() {
 }
 
 void moveStairs() {
-  if (stairsTimer.isExpired()) {
-    isStairs = random(30) == 0;
-    stairsTimer.set(STAIR_INTERVAL);
+  if (isStairs || !isAvatarAdjacent()) {//this prevents this routine from running if I am NOT STAIRS and the avatar IS adjacent
+    if (stairsTimer.isExpired()) {
+      isStairs = random(30) == 0;
+      stairsTimer.set(STAIR_INTERVAL);
+    }
   }
 }
 
@@ -255,10 +257,10 @@ void loopState_Path() {
 
   if (isAvatarAdjacent()) {
     timer.set(REVERT_TIME_PATH);
-  } else {
-    moveStairs();
   }
 
+  //we move stairs every frame, but it may not actually take effect under certain conditions
+  moveStairs();
 
   if (handleGameTimer()) return;
   handleBroadcasts(true, false);
