@@ -521,6 +521,25 @@ void avatarDisplay() {
   }
 }
 
+//ok, so I could do something with facewise animation
+byte faceProgress[6] = {0, 0, 0, 0, 0, 0};
+#define FACE_DECREMENT 5
+
+void facewiseLoop() {
+  FOREACH_FACE(f) {
+    //if my face or a neighboring face is adjacent to the avatar, just be 255
+    if (f == isAvatarAdjacent() || (f + 1) % 6 == isAvatarAdjacent() || (f + 5) % 6 == isAvatarAdjacent()) {
+      faceProgress[f] = 255;
+    } else {
+      if (faceProgress[f] > FACE_DECREMENT) {
+        faceProgress[f] -= FACE_DECREMENT;
+      } else {
+        faceProgress[f] = 0;
+      }
+    }
+  }
+}
+
 void pathDisplay() {
 
   byte currentHue = map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_HUE_SHALLOW, WATER_HUE_DEEP);
