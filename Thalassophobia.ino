@@ -424,6 +424,9 @@ void setup() {
 }
 
 void loop() {
+
+  facewiseLoop();
+
   switch (state) {
     case INIT:
       fogDisplay();
@@ -544,31 +547,38 @@ void pathDisplay() {
 
   byte currentHue = map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_HUE_SHALLOW, WATER_HUE_DEEP);
   byte currentSat = map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_SAT_SHALLOW, WATER_SAT_DEEP);
-  byte currentBri = map(timer.getRemaining(), 0, REVERT_TIME_PATH, 60, map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_BRI_DEEP, WATER_BRI_SHALLOW));
 
-  setColor(makeColorHSB(currentHue, currentSat, currentBri));
+  FOREACH_FACE(f) {
+
+    byte currentBri = map(faceProgress[f], 0, 255, 60, map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_BRI_DEEP, WATER_BRI_SHALLOW));
+
+    setColorOnFace(makeColorHSB(currentHue, currentSat, currentBri), f);
+  }
+
 
   if (isStairs) {
-    stairDisplay(currentHue, currentSat, currentBri);
+    stairDisplay(currentHue, currentSat, 255);
   }
 
 }
 
 void wallDisplay() {
+
   byte grassHue = map(level, 0, AVATAR_5 & LEVEL_MASK, GRASS_HUE_SHALLOW, GRASS_HUE_DEEP);
   byte waterHue = map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_HUE_SHALLOW, WATER_HUE_DEEP);
   byte currentHue = map(REVERT_TIME_PATH - timer.getRemaining(), 0, REVERT_TIME_PATH, grassHue, waterHue);
-  byte currentBri = map(timer.getRemaining(), 0, REVERT_TIME_PATH, 60, map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_BRI_DEEP, WATER_BRI_SHALLOW));
 
-  setColorOnFace(makeColorHSB(currentHue, 255, currentBri), 0);
-  setColorOnFace(makeColorHSB(currentHue, 255, currentBri / 2), 1);
-  setColorOnFace(makeColorHSB(currentHue, 255, currentBri), 2);
-  setColorOnFace(makeColorHSB(currentHue, 255, currentBri / 2), 3);
-  setColorOnFace(makeColorHSB(currentHue, 255, currentBri), 4);
-  setColorOnFace(makeColorHSB(currentHue, 255, currentBri / 2), 5);
+  FOREACH_FACE(f) {
+    byte currentBri = map(faceProgress[f], 0, 255, 60, map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_BRI_DEEP, WATER_BRI_SHALLOW));
+    if (f == 1 || f == 3 || f == 5) {//halve brightness on every other face
+      currentBri = currentBri / 2;
+    }
+
+    setColorOnFace(makeColorHSB(currentHue, 255, currentBri), f);
+  }
 
   if (isStairs) {
-    stairDisplay(currentHue, 255, currentBri);
+    stairDisplay(currentHue, 255, 255);
     //      setColorOnFace(makeColorHSB(currentHue, 0, currentBri), random(5));
     //      setColorOnFace(makeColorHSB(currentHue, 0, currentBri), random(5));
   }
@@ -582,7 +592,8 @@ void stairDisplay(byte hue, byte sat, byte bri) {
   byte sparkleFrame = (millis() % SPARKLE_CYCLE_TIME) / SPARKLE_FLASH_TIME;
   byte sparkleProgress = map(millis() % SPARKLE_FLASH_TIME, 0, SPARKLE_FLASH_TIME, 0, sat);
   if (sparkleFrame < 6) {
-    setColorOnFace(makeColorHSB(hue, sparkleProgress, bri), sparkleOffset[sparkleFrame]);
+    byte brightness = map(faceProgress[sparkleFrame], 0, 255, 60, map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_BRI_DEEP, WATER_BRI_SHALLOW));
+    setColorOnFace(makeColorHSB(hue, sparkleProgress, brightness), sparkleOffset[sparkleFrame]);
 
     //here we need to create the fading effect, which... huh
   }
