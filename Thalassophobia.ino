@@ -451,12 +451,13 @@ void loop() {
   switch (state) {
     case INIT:
       fogDisplay();
-      stairDisplay(110, 200, 255);
+      transitionDisplay();
       //should never be in this state
       break;
     case AVATAR_SPAWNING:
       loopState_AvatarSpawning();
       avatarDisplay();
+      transitionDisplay();
       break;
     case AVATAR:
       loopState_Avatar();
@@ -472,7 +473,7 @@ void loop() {
       break;
     case AVATAR_ASCENDED:
       pathDisplay();
-      stairDisplay(110, 200, 255);
+      transitionDisplay();
       loopState_AvatarAscended();
       break;
     case FOG:
@@ -499,12 +500,12 @@ void loop() {
       break;
     case BROADCAST:
       fogDisplay();
-      stairDisplay(110, 200, 255);
+      transitionDisplay();
       loopState_Broadcast();
       break;
     case BROADCAST_IGNORE:
       fogDisplay();
-      stairDisplay(110, 200, 255);
+      transitionDisplay();
       loopState_BroadcastIgnore();
       break;
   }
@@ -543,7 +544,7 @@ void avatarDisplay() {
 
 
   FOREACH_FACE(f) {
-    if (f <= airLevel) {
+    if ((f + heading) % 6 <= airLevel) {
       setColorOnFace(dim(WHITE, breathBrightness), f);
     }
   }
@@ -551,12 +552,12 @@ void avatarDisplay() {
 
 //ok, so I could do something with facewise animation
 byte faceProgress[6] = {0, 0, 0, 0, 0, 0};
-#define FACE_DECREMENT 5
+#define FACE_DECREMENT 4
 
 void facewiseLoop() {
   FOREACH_FACE(f) {
     //if my face or a neighboring face is adjacent to the avatar, just be 255
-    if (f == isAvatarAdjacent() || (f + 1) % 6 == isAvatarAdjacent() || (f + 5) % 6 == isAvatarAdjacent()) {
+    if (f == heading || (f + 1) % 6 == heading || (f + 5) % 6 == heading) {
       faceProgress[f] = 255;
     } else {
       if (faceProgress[f] > FACE_DECREMENT) {
@@ -622,6 +623,12 @@ void stairDisplay(byte hue, byte sat, byte bri) {
 
     //here we need to create the fading effect, which... huh
   }
+}
+
+void transitionDisplay() {
+  byte sparkleFrame = (millis() % (SPARKLE_FLASH_TIME * 6)) / SPARKLE_FLASH_TIME;
+  setColorOnFace(WHITE, sparkleOffset[sparkleFrame]);
+
 }
 
 void fogDisplay() {
