@@ -19,10 +19,10 @@
 //#define GAME_TIME_MAX 180000 //3 minutes
 #define GAME_TIME_MAX 360000 //6 minutes
 //#define GAME_TIME_MAX 10000 //10 seconds
-enum state {INIT, AVATAR, AVATAR_ENTERING, AVATAR_LEAVING, AVATAR_ASCENDED, FOG, PATH, WALL, GAME_OVER, BROADCAST, BROADCAST_IGNORE};
+enum state {INIT, AVATAR_SPAWNING, AVATAR, AVATAR_ENTERING, AVATAR_LEAVING, AVATAR_ASCENDED, FOG, PATH, WALL, GAME_OVER, BROADCAST, BROADCAST_IGNORE};
 
 //              0     1      10   11    100   101       110             111      1000      1001      1010      1011      1100      1101      1110
-enum protoc {NONE, MOVE, ASCEND, WIN, RESET, DEPARTED, UNUSED_2, LEVEL_MASK, AVATAR_0, AVATAR_1, AVATAR_2, AVATAR_3, AVATAR_4, AVATAR_5, AVATAR_6};
+enum protoc {NONE, MOVE, ASCEND, WIN, RESET, DEPARTED, AVATAR_SPAWN, LEVEL_MASK, AVATAR_0, AVATAR_1, AVATAR_2, AVATAR_3, AVATAR_4, AVATAR_5, AVATAR_6};
 Timer timer;
 Timer stairsTimer;
 unsigned long startMillis;
@@ -47,6 +47,7 @@ void handleBroadcasts(bool handleResetRequest, bool ignoreAscend) {
       switch (lastValue) {
         case ASCEND:
           if (ignoreAscend) break;
+        case AVATAR_SPAWN:
         case WIN:
         case RESET:
           broadcastMessage = lastValue;
@@ -99,6 +100,19 @@ void moveStairs() {
       isStairs = random(30) == 0;
       stairsTimer.set(STAIR_INTERVAL);
     }
+  }
+}
+
+void enterState_AvatarSpawning() {
+  timer.set(750);
+  setValueSentOnAllFaces(AVATAR_SPAWN);
+  state = AVATAR_SPAWNING;
+}
+
+void loopState_AvatarSpawning() {
+  if (timer.isExpired()) {
+    enterState_Init(); //don't actually switch to INIT state, just do all the init stuff then become avatar
+    enterState_Avatar(); return;
   }
 }
 
@@ -220,7 +234,7 @@ void loopState_Fog() {
 
   buttonSingleClicked(); //do nothing just consume errant click
   if (buttonLongPressed()) {
-    enterState_Avatar();
+    enterState_AvatarSpawning();
     return;
   }
 
@@ -336,6 +350,10 @@ void enterState_Broadcast() {
   timer.set(500);
   setValueSentOnAllFaces(broadcastMessage);
   switch (broadcastMessage) {
+    case AVATAR_SPAWN: // a challenger has appeared
+      startMillis = millis(); //reset game timer
+      postBroadcastState = state; //go back to whatever state you were before
+      break;
     case ASCEND:
       isStairs = false;
       stairsTimer.set(STAIR_INTERVAL); //prevent stairs from popping next to avatar immediately on ascension
@@ -375,9 +393,12 @@ void loopState_BroadcastIgnore() {
       case INIT:
         enterState_Init();
         break;
-      //        case AVATAR:
-      //          enterState_Avatar();
+      //        case AVATAR_SPAWNING:
+      //          enterState_AvatarSpawning();
       //          break;
+      case AVATAR:
+        enterState_Avatar();
+        break;
       //        case AVATAR_ENTERING:
       //          enterState_AvatarEntering();
       //          break;
@@ -390,12 +411,12 @@ void loopState_BroadcastIgnore() {
       case FOG:
         enterState_Fog();
         break;
-      //        case PATH:
-      //          enterState_Path();
-      //          break;
-      //        case WALL:
-      //          enterState_Wall();
-      //          break;
+      case PATH:
+        enterState_Path();
+        break;
+      case WALL:
+        enterState_Wall();
+        break;
       case GAME_OVER:
         enterState_GameOver();
         break;
@@ -429,6 +450,10 @@ void loop() {
       fogDisplay();
       stairDisplay(110, 200, 255);
       //should never be in this state
+      break;
+    case AVATAR_SPAWNING:
+      loopState_AvatarSpawning();
+      avatarDisplay();
       break;
     case AVATAR:
       loopState_Avatar();
