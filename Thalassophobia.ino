@@ -445,15 +445,19 @@ void setup() {
 }
 
 void loop() {
+
+  facewiseLoop();
+
   switch (state) {
     case INIT:
       fogDisplay();
-      stairDisplay(110, 200, 255);
+      transitionDisplay();
       //should never be in this state
       break;
     case AVATAR_SPAWNING:
       loopState_AvatarSpawning();
       avatarDisplay();
+      transitionDisplay();
       break;
     case AVATAR:
       loopState_Avatar();
@@ -469,7 +473,7 @@ void loop() {
       break;
     case AVATAR_ASCENDED:
       pathDisplay();
-      stairDisplay(110, 200, 255);
+      transitionDisplay();
       loopState_AvatarAscended();
       break;
     case FOG:
@@ -496,12 +500,12 @@ void loop() {
       break;
     case BROADCAST:
       fogDisplay();
-      stairDisplay(110, 200, 255);
+      transitionDisplay();
       loopState_Broadcast();
       break;
     case BROADCAST_IGNORE:
       fogDisplay();
-      stairDisplay(110, 200, 255);
+      transitionDisplay();
       loopState_BroadcastIgnore();
       break;
   }
@@ -540,8 +544,27 @@ void avatarDisplay() {
 
 
   FOREACH_FACE(f) {
-    if (f <= airLevel) {
+    if ((f + heading) % 6 <= airLevel) {
       setColorOnFace(dim(WHITE, breathBrightness), f);
+    }
+  }
+}
+
+//ok, so I could do something with facewise animation
+byte faceProgress[6] = {0, 0, 0, 0, 0, 0};
+#define FACE_DECREMENT 4
+
+void facewiseLoop() {
+  FOREACH_FACE(f) {
+    //if my face or a neighboring face is adjacent to the avatar, just be 255
+    if (f == heading || (f + 1) % 6 == heading || (f + 5) % 6 == heading) {
+      faceProgress[f] = 255;
+    } else {
+      if (faceProgress[f] > FACE_DECREMENT) {
+        faceProgress[f] -= FACE_DECREMENT;
+      } else {
+        faceProgress[f] = 0;
+      }
     }
   }
 }
@@ -561,20 +584,22 @@ void pathDisplay() {
 }
 
 void wallDisplay() {
+
   byte grassHue = map(level, 0, AVATAR_5 & LEVEL_MASK, GRASS_HUE_SHALLOW, GRASS_HUE_DEEP);
   byte waterHue = map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_HUE_SHALLOW, WATER_HUE_DEEP);
   byte currentHue = map(REVERT_TIME_PATH - timer.getRemaining(), 0, REVERT_TIME_PATH, grassHue, waterHue);
-  byte currentBri = map(timer.getRemaining(), 0, REVERT_TIME_PATH, 60, map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_BRI_DEEP, WATER_BRI_SHALLOW));
 
-  setColorOnFace(makeColorHSB(currentHue, 255, currentBri), 0);
-  setColorOnFace(makeColorHSB(currentHue, 255, currentBri / 2), 1);
-  setColorOnFace(makeColorHSB(currentHue, 255, currentBri), 2);
-  setColorOnFace(makeColorHSB(currentHue, 255, currentBri / 2), 3);
-  setColorOnFace(makeColorHSB(currentHue, 255, currentBri), 4);
-  setColorOnFace(makeColorHSB(currentHue, 255, currentBri / 2), 5);
+  FOREACH_FACE(f) {
+    byte currentBri = map(faceProgress[f], 0, 255, 60, map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_BRI_DEEP, WATER_BRI_SHALLOW));
+    if (f == 1 || f == 3 || f == 5) {//halve brightness on every other face
+      currentBri = currentBri / 2;
+    }
+
+    setColorOnFace(makeColorHSB(currentHue, 255, currentBri), f);
+  }
 
   if (isStairs) {
-    stairDisplay(currentHue, 255, currentBri);
+    stairDisplay(currentHue, 255, 255);
     //      setColorOnFace(makeColorHSB(currentHue, 0, currentBri), random(5));
     //      setColorOnFace(makeColorHSB(currentHue, 0, currentBri), random(5));
   }
@@ -588,10 +613,17 @@ void stairDisplay(byte hue, byte sat, byte bri) {
   byte sparkleFrame = (millis() % SPARKLE_CYCLE_TIME) / SPARKLE_FLASH_TIME;
   byte sparkleProgress = map(millis() % SPARKLE_FLASH_TIME, 0, SPARKLE_FLASH_TIME, 0, sat);
   if (sparkleFrame < 6) {
-    setColorOnFace(makeColorHSB(hue, sparkleProgress, bri), sparkleOffset[sparkleFrame]);
+    byte brightness = map(faceProgress[sparkleFrame], 0, 255, 60, map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_BRI_DEEP, WATER_BRI_SHALLOW));
+    setColorOnFace(makeColorHSB(hue, sparkleProgress, brightness), sparkleOffset[sparkleFrame]);
 
     //here we need to create the fading effect, which... huh
   }
+}
+
+void transitionDisplay() {
+  byte sparkleFrame = (millis() % (SPARKLE_FLASH_TIME * 6)) / SPARKLE_FLASH_TIME;
+  setColorOnFace(WHITE, sparkleOffset[sparkleFrame]);
+
 }
 
 void fogDisplay() {
