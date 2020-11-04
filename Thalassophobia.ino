@@ -573,17 +573,12 @@ void pathDisplay() {
 
   byte currentHue = map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_HUE_SHALLOW, WATER_HUE_DEEP);
   byte currentSat = map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_SAT_SHALLOW, WATER_SAT_DEEP);
+  byte currentBri = map(timer.getRemaining(), 0, REVERT_TIME_PATH, 60, map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_BRI_DEEP, WATER_BRI_SHALLOW));
 
-  FOREACH_FACE(f) {
-
-    byte currentBri = map(faceProgress[f], 0, 255, 60, map(level, 0, AVATAR_5 & LEVEL_MASK, WATER_BRI_DEEP, WATER_BRI_SHALLOW));
-
-    setColorOnFace(makeColorHSB(currentHue, currentSat, currentBri), f);
-  }
-
+  setColor(makeColorHSB(currentHue, currentSat, currentBri));
 
   if (isStairs) {
-    stairDisplay(currentHue, currentSat, 255);
+    stairDisplay(currentHue, currentSat, currentBri);
   }
 
 }
